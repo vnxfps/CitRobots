@@ -1,0 +1,28 @@
+﻿@model CheckoutViewModel
+
+<div class="checkout-container">
+    <div class="checkout-summary">
+        <h3>Resumo do Pedido</h3>
+        @foreach (var item in Model.Carrinho?.Items ?? Enumerable.Empty<ItemViewModel>())
+        {
+            <div class="checkout-item">
+                <span>@item.Robot.Nome</span>
+                <span>R$ @item.Preco.ToString("N2")</span>
+            </div>
+        }
+        <div class="checkout-total">
+            <strong>Total:</strong>
+            <strong>R$ @Model.Carrinho?.Total.ToString("N2") ?? "0,00"</strong>
+        </div>
+    </div>
+
+    <form asp-action="ProcessPayment" method="post">
+        <div class="endereco-entrega">
+            <h3>Endereço de Entrega</h3>
+            <div class="form-group">
+                <label asp-for="EnderecoEntrega."></label>
+                <!-- Continue com o formulário -->
+            </div>
+        </div>
+    </form>
+</div>

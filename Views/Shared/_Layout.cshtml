@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CitRobots</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">CitRobots</a>
+                <div class="navbar-right">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                            <a asp-controller="Usuario" asp-action="Profile">Minha Conta</a>
+                            <a asp-controller="Carrinho" asp-action="Index">Carrinho</a>
+                            <form asp-controller="Usuario" asp-action="Logout" method="post">
+                                <button type="submit">Sair</button>
+                            </form>
+                    }
+                    else
+                    {
+                            <a asp-controller="Usuario" asp-action="Login">Login</a>
+                            <a asp-controller="Usuario" asp-action="Register">Cadastro</a>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 - CitRobots</p>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

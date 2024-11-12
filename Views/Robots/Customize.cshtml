@@ -1,0 +1,34 @@
+﻿@model CustomizeRobotViewModel
+
+<div class="customize-container">
+    <h2>Personalize seu @Model.Robot.Nome</h2>
+
+    <form></form> asp-action="AddToCart" method="post">
+        <input type="hidden" name="robotId" value="@Model.Robot.Id" />
+
+        <div class="personalizacao-section">
+            <h3>Cor</h3>
+            @foreach (var cor in Model.Personalizacoes.Where(p => p.Tipo == "Cor"))
+            {
+                <div class="opcao">
+                    <input type="radio" name="personalizacaoIds" value="@cor.Id" required />
+                    <label>@cor.Nome</label>
+                </div>
+            }
+        </div>
+
+        <div class="personalizacao-section">
+            <h3>Voz</h3>
+            @foreach (var voz in Model.Personalizacoes.Where(p => p.Tipo == "Voz"))
+            {
+                <div class="opcao">
+                    <input type="radio" name="personalizacaoIds" value="@voz.Id" required />
+                    <label>@voz.Nome</label>
+                </div>
+            }
+        </div>
+
+        <!-- Adicione seções similares para Tamanho, Peso e Recursos -->
+
+        <div class="preco-total">
+            <h3>Preço Total: R$ @@

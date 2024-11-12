@@ -1,0 +1,18 @@
+﻿@model Robot
+
+<div class="robot-details">
+    <div class="robot-image">
+        <img src="@Model.ImagemUrl" alt="@Model.Nome" />
+    </div>
+
+    <div class="robot-info">
+        <h1>@Model.Nome</h1>
+        <p class="slogan">@Model.Slogan</p>
+        <p class="price">R$ @Model.Preco.ToString("N2")</p>
+
+        <a href="@Url.Action("Customize", new { id = Model.Id })"
+           class="btn btn-primary">
+            Personalizar
+        </a>
+    </div>
+</div>
