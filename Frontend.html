@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CitRobots - Transforme cada treino em uma vitória!</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: rgb(57, 57, 57);
+            --secondary: #3b82f6;
+            --accent: #f59e0b;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .hero-section {
+            height: 100vh;
+            background: var(--primary);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            max-width: 600px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .robot-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+            .robot-card:hover {
+                transform: translateY(-10px);
+            }
+
+        .customization-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-top: 2rem;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+            .color-option:hover {
+                transform: scale(1.1);
+            }
+
+        .cart-item {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .checkout-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Animações */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <!-- Seção Hero -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Transforme cada treino em uma vitória!</h1>
+            <p class="hero-subtitle">Liberte o potencial máximo do seu time com CitRobots — mais precisão, mais inteligência, mais vitórias.</p>
+            <div class="hero-cta">
+                <button class="btn-primary">Explorar Robôs</button>
+            </div>
+        </div>
+        <div id="hero-canvas"></div>
+    </section>
+
+    <!-- Seção de Produtos -->
+    <section class="products-section">
+        <div class="container mx-auto px-4 py-16">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Keeper -->
+                <div class="robot-card">
+                    <img src="keeper.jpg" alt="Keeper 2024" class="w-full h-64 object-cover rounded-lg">
+                    <h3 class="text-2xl font-bold mt-4">Keeper 2024</h3>
+                    <p class="text-gray-600">Aprimore cada defesa. Leva os goleiros ao próximo nível.</p>
+                    <p class="text-xl font-bold mt-4">R$ 174.999,00</p>
+                    <button class="w-full bg-primary text-white py-2 rounded-lg mt-4 hover:bg-opacity-90">
+                        Personalizar
+                    </button>
+                </div>
+
+                <!-- Striker -->
+                <div class="robot-card">
+                    <!-- Conteúdo similar ao Keeper -->
+                </div>
+
+                <!-- Defender -->
+                <div class="robot-card">
+                    <!-- Conteúdo similar ao Keeper -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script>
+        // Animações com GSAP
+        gsap.from(".hero-title", {
+            duration: 1,
+            y: 50,
+            opacity: 0,
+            delay: 0.5
+        });
+
+        gsap.from(".hero-subtitle", {
+            duration: 1,
+            y: 30,
+            opacity: 0,
+            delay: 0.8
+        });
+
+        // Efeito de parallax no mouse
+        document.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+            const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+
+            gsap.to(".hero-content", {
+                x: moveX,
+                y: moveY,
+                duration: 1
+            });
+        });
+
+        // Inicialização do Three.js para background animado
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+
+        // Configuração do renderer e animação
+        // ... (código Three.js para criar um background animado)
+    </script>
+</body>
+</html>
