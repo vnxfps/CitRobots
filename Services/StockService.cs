@@ -1,4 +1,5 @@
 ﻿using CitRobots.Helpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,23 +12,16 @@ namespace CitRobots.Services
     {
         private readonly DatabaseHelper _db;
 
-        public StockService()
-        {
-            _db = new DatabaseHelper();
-        }
+        public StockService() => _db = new DatabaseHelper();
 
         public bool VerificarEstoque(int robotId, int quantidade)
         {
-            string query = "SELECT quantidade_estoque FROM robos WHERE id = @RobotId";
+            string query = "SELECT quantidade_estoque FROM robos WHERE id = @RobotId AND ativo = 1";
             var parameters = new Dictionary<string, object> { { "@RobotId", robotId } };
             var result = _db.ExecuteSelect(query, parameters);
 
-            if (result.Rows.Count > 0)
-            {
-                int estoqueAtual = Convert.ToInt32(result.Rows[0]["quantidade_estoque"]);
-                return estoqueAtual >= quantidade;
-            }
-            return false;
+            return result.Rows.Count > 0 &&
+                   Convert.ToInt32(result.Rows[0]["quantidade_estoque"]) >= quantidade;
         }
 
         public bool DiminuirEstoque(int robotId, int quantidade)

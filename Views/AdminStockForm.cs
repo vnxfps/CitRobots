@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using CitRobots.Helpers;
 using System.Collections.Generic;
+using CitRobots.Services;
 
 namespace CitRobots.Views
 {
@@ -11,22 +12,21 @@ namespace CitRobots.Views
         private Panel loginPanel;
         private Panel stockPanel;
         private DataGridView gridStock;
-        private DatabaseHelper _db;
-
+        private readonly AdminStockService _adminService;
         private readonly Dictionary<string, string> adminCredentials = new Dictionary<string, string>
-       {
-           {"CitNoah", "NoahADM1"},
-           {"CitGirata", "GirataADM1"},
-           {"CitGuilherme", "GuilhermeADM1"},
-           {"CitKadu", "KaduADM1"},
-           {"CitGiovanni", "GiovanniADM1"},
-           {"CitLuan", "LuanADM1"}
-       };
+        {
+            {"CitNoah", "NoahADM1"},
+            {"CitGirata", "GirataADM1"},
+            {"CitGuilherme", "GuilhermeADM1"},
+            {"CitKadu", "KaduADM1"},
+            {"CitGiovanni", "GiovanniADM1"},
+            {"CitLuan", "LuanADM1"}
+        };
 
         public AdminStockForm()
         {
             InitializeComponent();
-            _db = new DatabaseHelper();
+            _adminService = new AdminStockService();
             SetupLoginPanel();
             CenterToScreen();
         }
@@ -141,16 +141,15 @@ namespace CitRobots.Views
             btnLogin.Click += (s, e) => ValidateLogin(txtLogin.Text, txtSenha.Text);
 
             loginPanel.Controls.AddRange(new Control[] {
-               lblLogin, txtLogin, lblSenha, txtSenha, btnLogin
-           });
+                lblLogin, txtLogin, lblSenha, txtSenha, btnLogin
+            });
 
             mainContainer.Controls.AddRange(new Control[] {
-               logoBox, lblTitle, loginPanel
-           });
+                logoBox, lblTitle, loginPanel
+            });
 
             this.Controls.Add(mainContainer);
 
-            // Ajusta posições dos elementos quando o formulário é redimensionado
             this.Resize += (s, e) =>
             {
                 logoBox.Location = new Point((this.ClientSize.Width - logoBox.Width) / 2, 20);
@@ -242,36 +241,29 @@ namespace CitRobots.Views
 
         private void LoadStockData()
         {
-            string query = @"
-               SELECT 
-                   id as 'ID',
-                   nome as 'Nome do Robô',
-                   codigo_modelo as 'Código',
-                   CONCAT('R$ ', FORMAT(preco, 2, 'pt-BR')) as 'Preço',
-                   quantidade_estoque as 'Estoque'
-               FROM citrobots.robos
-               ORDER BY nome";
-
-            var dt = _db.ExecuteSelect(query);
-
-            if (dt != null && dt.Rows.Count > 0)
+            try
             {
-                gridStock.DataSource = dt;
-                gridStock.Columns["ID"].Visible = false;
-                gridStock.Columns["Estoque"].ReadOnly = false;
-                gridStock.Columns["Nome do Robô"].ReadOnly = true;
-                gridStock.Columns["Código"].ReadOnly = true;
-                gridStock.Columns["Preço"].ReadOnly = true;
-
-                foreach (DataGridViewColumn col in gridStock.Columns)
-                {
-                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                }
+                gridStock.DataSource = _adminService.GetAllRobots();
+                ConfigureGrid();
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Nenhum dado encontrado.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"Erro ao carregar dados: {ex.Message}", "Erro",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ConfigureGrid()
+        {
+            gridStock.Columns["ID"].Visible = false;
+            gridStock.Columns["Estoque"].ReadOnly = false;
+            gridStock.Columns["Preço"].ReadOnly = false;
+            gridStock.Columns["Nome"].ReadOnly = true;
+            gridStock.Columns["Código"].ReadOnly = true;
+
+            foreach (DataGridViewColumn col in gridStock.Columns)
+            {
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             }
         }
 
@@ -290,28 +282,28 @@ namespace CitRobots.Views
 
         private void GridStock_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            if (gridStock.Columns[e.ColumnIndex].Name != "Estoque") return;
-
-            var row = gridStock.Rows[e.RowIndex];
-            int robotId = Convert.ToInt32(row.Cells["ID"].Value);
-            int newQuantity = Convert.ToInt32(row.Cells["Estoque"].Value);
-
-            string query = "UPDATE citrobots.robos SET quantidade_estoque = @Quantity WHERE id = @RobotId";
-            var parameters = new Dictionary<string, object>
-           {
-               { "@RobotId", robotId },
-               { "@Quantity", newQuantity }
-           };
-
             try
             {
-                _db.ExecuteUpdate(query, parameters);
+                var row = gridStock.Rows[e.RowIndex];
+                int robotId = Convert.ToInt32(row.Cells["ID"].Value);
+
+                if (gridStock.Columns[e.ColumnIndex].Name == "Estoque")
+                {
+                    int newQuantity = Convert.ToInt32(row.Cells["Estoque"].Value);
+                    _adminService.UpdateStock(robotId, newQuantity);
+                }
+                else if (gridStock.Columns[e.ColumnIndex].Name == "Preço")
+                {
+                    decimal newPrice = Convert.ToDecimal(row.Cells["Preço"].Value);
+                    _adminService.UpdatePrice(robotId, newPrice);
+                }
+
                 LoadStockData();
             }
-            catch
+            catch (Exception ex)
             {
-                MessageBox.Show("Erro ao atualizar estoque. Tente novamente.",
-                    "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Erro ao atualizar: {ex.Message}", "Erro",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 LoadStockData();
             }
         }

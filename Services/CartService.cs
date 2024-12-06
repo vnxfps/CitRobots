@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CitRobots.Helpers;
 using CitRobots.Models;
 
 namespace CitRobots.Services
@@ -10,6 +11,7 @@ namespace CitRobots.Services
     public static class CartService
     {
         private static List<CartItemModel> _cartItems = new List<CartItemModel>();
+        private readonly static DatabaseHelper _db = new DatabaseHelper();
 
         public static void AddToCart(RobotModel robot, RobotCustomizationModel customization)
         {
@@ -18,16 +20,13 @@ namespace CitRobots.Services
                 Robot = robot,
                 Customization = customization,
                 PrecoUnitario = robot.Preco,
-                PrecoTotal = robot.CalcularPrecoTotal()
+                PrecoTotal = robot.CalcularPrecoTotal(),
+                Quantidade = 1
             };
-
             _cartItems.Add(item);
         }
 
-        public static List<CartItemModel> GetCartItems()
-        {
-            return _cartItems;
-        }
+        public static List<CartItemModel> GetCartItems() => _cartItems;
 
         public static void RemoveFromCart(int index)
         {
@@ -35,40 +34,28 @@ namespace CitRobots.Services
                 _cartItems.RemoveAt(index);
         }
 
-        public static void ClearCart()
-        {
-            _cartItems.Clear();
-        }
+        public static void ClearCart() => _cartItems.Clear();
 
-        public static decimal GetTotal()
-        {
-            return _cartItems.Sum(item => item.PrecoTotal);
-        }
-
-        private static decimal CalcularPrecoPersonalizacoes(RobotCustomizationModel customization)
-        {
-            decimal total = 0;
-
-            if (customization.TemReplay) total += 5000;
-            if (customization.TemMonitoramento) total += 7500;
-
-            return total;
-        }
+        public static decimal GetTotal() => _cartItems.Sum(item => item.PrecoTotal);
 
         public static decimal AplicarDesconto(string cupom)
         {
-            var descontos = new Dictionary<string, decimal>
-            {
-                { "CIT5", 0.05m },
-                { "CIT10", 0.10m },
-                { "CIT15", 0.15m }
-            };
+            string query = @"SELECT tipo, valor FROM cupons_desconto 
+                        WHERE codigo = @Codigo AND ativo = 1 
+                        AND data_inicio <= NOW() AND data_validade >= NOW()";
 
-            if (descontos.TryGetValue(cupom.ToUpper(), out decimal percentual))
+            var parameters = new Dictionary<string, object> { { "@Codigo", cupom } };
+            var result = _db.ExecuteSelect(query, parameters);
+
+            if (result.Rows.Count > 0)
             {
-                return GetTotal() * (1 - percentual);
+                var row = result.Rows[0];
+                string tipo = row["tipo"].ToString();
+                decimal valor = Convert.ToDecimal(row["valor"]);
+
+                decimal total = GetTotal();
+                return tipo == "PORCENTAGEM" ? total * (1 - valor / 100) : total - valor;
             }
-
             return GetTotal();
         }
     }

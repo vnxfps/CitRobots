@@ -9,6 +9,8 @@ namespace CitRobots.Models
     public class UserModel
     {
         public int Id { get; set; }
+        public string Login { get; set; }
+        public string Senha { get; set; }
         public string Nome { get; set; }
         public string Sobrenome { get; set; }
         public string Email { get; set; }
@@ -16,6 +18,7 @@ namespace CitRobots.Models
         public string DataNascimento { get; set; }
         public string Telefone { get; set; }
         public string Endereco { get; set; }
-        public string Senha { get; set; }
+        public string TipoUsuario { get; set; }
+        public bool Ativo { get; set; }
     }
 }

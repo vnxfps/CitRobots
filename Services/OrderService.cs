@@ -2,60 +2,49 @@
 using System.Data;
 using System.Collections.Generic;
 using CitRobots.Models;
-using Newtonsoft.Json;
 using CitRobots.Helpers;
+using Newtonsoft.Json;
 
 namespace CitRobots.Services
 {
     public class OrderService
     {
         private readonly DatabaseHelper _db;
+        private readonly StockService _stockService;
 
         public OrderService()
         {
             _db = new DatabaseHelper();
+            _stockService = new StockService();
         }
 
-        public int SalvarPedido(int clienteId, List<CartItemModel> items, decimal subtotal, decimal desconto, string cupom)
+        public int SalvarPedido(int clienteId, List<CartItemModel> items, decimal subtotal, decimal desconto)
         {
+            string numeroPedido = GerarNumeroPedido();
+
             try
             {
-                string numeroPedido = GerarNumeroPedido();
                 string queryPedido = @"INSERT INTO pedidos 
-                    (cliente_id, numero_pedido, status, data_pedido, subtotal, desconto, total) 
-                    VALUES 
-                    (@ClienteId, @NumeroPedido, 'PENDENTE', NOW(), @Subtotal, @Desconto, @Total);
-                    SELECT LAST_INSERT_ID();";
+                (cliente_id, numero_pedido, status, data_pedido, subtotal, desconto, total) 
+                VALUES (@ClienteId, @NumeroPedido, 'PENDENTE', NOW(), @Subtotal, @Desconto, @Total)";
 
                 var paramsPedido = new Dictionary<string, object>
-                {
-                    { "@ClienteId", clienteId },
-                    { "@NumeroPedido", numeroPedido },
-                    { "@Subtotal", subtotal },
-                    { "@Desconto", desconto },
-                    { "@Total", subtotal - desconto }
-                };
+            {
+                { "@ClienteId", clienteId },
+                { "@NumeroPedido", numeroPedido },
+                { "@Subtotal", subtotal },
+                { "@Desconto", desconto },
+                { "@Total", subtotal - desconto }
+            };
 
-                // Use _db ao invés de DatabaseHelper
                 int pedidoId = _db.ExecuteInsert(queryPedido, paramsPedido);
 
                 foreach (var item in items)
                 {
-                    string queryItem = @"INSERT INTO itens_pedido 
-                        (pedido_id, robo_id, quantidade, preco_unitario, subtotal, personalizacoes) 
-                        VALUES 
-                        (@PedidoId, @RoboId, 1, @PrecoUnitario, @Subtotal, @Personalizacoes)";
+                    if (!_stockService.DiminuirEstoque(item.Robot.Id, item.Quantidade))
+                        throw new Exception($"Estoque insuficiente para {item.Robot.Nome}");
 
-                    var paramsItem = new Dictionary<string, object>
-                    {
-                        { "@PedidoId", pedidoId },
-                        { "@RoboId", item.Robot.Id },
-                        { "@PrecoUnitario", item.PrecoUnitario },
-                        { "@Subtotal", item.PrecoTotal },
-                        { "@Personalizacoes", JsonConvert.SerializeObject(item.Customization) }
-                    };
-
-                    _db.ExecuteInsert(queryItem, paramsItem);
+                    SalvarItemPedido(pedidoId, item);
                 }
 
                 return pedidoId;
@@ -66,29 +55,26 @@ namespace CitRobots.Services
             }
         }
 
-        private string GerarNumeroPedido()
+        private void SalvarItemPedido(int pedidoId, CartItemModel item)
         {
-            throw new NotImplementedException();
-        }
-
-        public DataTable BuscarPedidosCliente(int clienteId)
-        {
-            string query = @"SELECT p.*, COUNT(i.id) as quantidade_itens 
-                           FROM pedidos p 
-                           LEFT JOIN itens_pedido i ON p.id = i.pedido_id 
-                           WHERE p.cliente_id = @ClienteId 
-                           GROUP BY p.id 
-                           ORDER BY p.data_pedido DESC";
+            string query = @"INSERT INTO itens_pedido 
+            (pedido_id, robo_id, quantidade, preco_unitario, subtotal, personalizacoes) 
+            VALUES (@PedidoId, @RoboId, @Quantidade, @PrecoUnit, @Subtotal, @Personalizacoes)";
 
             var parameters = new Dictionary<string, object>
-            {
-                { "@ClienteId", clienteId }
-            };
+        {
+            { "@PedidoId", pedidoId },
+            { "@RoboId", item.Robot.Id },
+            { "@Quantidade", item.Quantidade },
+            { "@PrecoUnit", item.PrecoUnitario },
+            { "@Subtotal", item.PrecoTotal },
+            { "@Personalizacoes", JsonConvert.SerializeObject(item.Customization) }
+        };
 
-            return _db.ExecuteSelect(query, parameters);
+            _db.ExecuteInsert(query, parameters);
         }
 
-        // Outros métodos usando _db ao invés de DatabaseHelper
-        // ...
+        private string GerarNumeroPedido() =>
+            DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(1000, 9999).ToString();
     }
 }

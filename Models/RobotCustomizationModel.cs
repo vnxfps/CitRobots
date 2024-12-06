@@ -8,8 +8,11 @@ namespace CitRobots.Models
 {
     public class RobotCustomizationModel
     {
+        public int? CorId { get; set; }
         public string Cor { get; set; }
+        public int? VozId { get; set; }
         public string Voz { get; set; }
+        public int? DimensaoId { get; set; }
         public string Tamanho { get; set; }
         public string Peso { get; set; }
         public bool TemReplay { get; set; }
